@@ -1,0 +1,22 @@
+{
+  "name": "proclubs-stats-server",
+  "version": "1.0.0",
+  "description": "Pro Clubs stats server with Firebase Firestore match history storage",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.3",
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.10.0",
+    "node-cron": "^4.2.1",
+    "node-fetch": "^2.6.12"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
