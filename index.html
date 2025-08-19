@@ -1,0 +1,1168 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pro Club Stats & League</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f3f3f3;
+  color: #222;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark, body.dark-mode {
+  background-color: #121212;
+  color: #eee;
+}
+
+body {
+  display: flex;
+}
+
+#sidebar {
+  width: 200px;
+  background: #007bff;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+#sidebar button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 15px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border-left: 5px solid transparent;
+  transition: background-color 0.2s, border-color 0.3s;
+}
+
+#sidebar button.active {
+  background-color: rgba(255,255,255,0.2);
+  border-left-color: gold;
+  font-weight: bold;
+}
+
+#sidebar button:hover,
+#sidebar button:focus {
+  background-color: rgba(255,255,255,0.1);
+  outline: none;
+}
+
+#sidebar button:focus-visible {
+  outline: 2px solid gold;
+  outline-offset: 2px;
+}
+
+#sidebar .spacer {
+  flex-grow: 1;
+}
+
+#sidebar #darkModeToggle {
+  border-top: 1px solid rgba(255,255,255,0.3);
+  margin-top: 10px;
+  padding-top: 15px;
+}
+
+#main {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+body.dark #main,
+body.dark-mode #main {
+  background-color: #1e1e1e;
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.card {
+  color: white;
+  border-radius: 10px;
+  width: 300px;
+  height: 400px;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  overflow: hidden;
+  user-select: none;
+}
+
+.overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.overlay h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.badge {
+  background-color: #007bff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.stats {
+  margin-top: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.stats p {
+  margin: 4px 0;
+}
+
+.rank {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: gold;
+  color: black;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 50%;
+  font-size: 16px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  user-select: none;
+}
+
+#matches-container {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+#matches-container p {
+  background: #007bff;
+  color: white;
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+body.dark #matches-container p,
+body.dark-mode #matches-container p {
+  background: #0056b3;
+}
+
+.league-section {
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+}
+
+.league-section h2, .league-section h3 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.league-section table {
+  border-collapse: collapse;
+  width: 100%;
+  background: white;
+  margin-bottom: 20px;
+}
+
+.league-section table th, .league-section table td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.league-section table th {
+  background-color: #333;
+  color: white;
+}
+
+.league-section ul {
+  max-width: 400px;
+  margin: 0 auto;
+  padding-left: 20px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+#updateMatchesBtn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  transition: background-color 0.3s;
+}
+
+#updateMatchesBtn:hover {
+  background-color: #218838;
+}
+
+#updateStatus {
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#fifaTopScorersChart,
+#fifaTopAssistsChart {
+  max-width: 700px;
+  height: 400px;
+  margin: 0 auto 40px auto;
+  display: block;
+}
+
+#bracket-section {
+  margin: 2rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+#bracket-section h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bracket {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.matchup {
+  background: #f9f9f9;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 200px;
+  text-align: center;
+}
+
+.team {
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.vs {
+  font-style: italic;
+  color: #888;
+}
+
+#season-view {
+  padding: 2rem;
+  background-color: #fefefe;
+  min-height: 100vh;
+  overflow-y: auto;
+  color: #222;
+}
+
+.season-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.mini-table table,
+.season-bracket ul {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mini-table th,
+.mini-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+
+.season-bracket li {
+  margin-bottom: 0.5rem;
+}
+
+#season-awards {
+  background: #fafafa;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.award-entry {
+  background-color: #fff;
+  padding: 30px 40px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 400px;
+  width: 100%;
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  text-align: center;
+}
+
+.award-entry h3 {
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+}
+
+.award-entry b {
+  font-size: 1.1rem;
+  margin-top: 8px;
+  display: block;
+}
+
+.award-entry img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.award-details {
+  flex: 1;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .season-top {
+    flex-direction: column;
+  }
+
+  .award-entry {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .award-entry img {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+  }
+}
+
+</style>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+<div id="sidebar" role="navigation" aria-label="Main navigation">
+  <button id="btnPlayers" class="active" aria-selected="true" tabindex="0">Players</button>
+  <button id="btnMatches" aria-selected="false" tabindex="-1">Matches</button>
+  <button id="btnLeague" aria-selected="false" tabindex="-1">League</button>
+  <div class="spacer"></div>
+  <button id="darkModeToggle" aria-pressed="false">Toggle Dark Mode</button>
+  <button id="btnSeason" aria-selected="false" tabindex="-1">Season</button>
+</div>
+
+<div id="main" role="main">
+  <div id="players-view" class="view active" tabindex="0" aria-live="polite" aria-label="Players View">
+    <h1>Players</h1>
+    <div id="players-container" class="container">
+      <!-- Player cards get inserted here -->
+    </div>
+  </div>
+
+  <div id="matches-view" class="view" tabindex="0" aria-live="polite" aria-label="Matches View">
+    <h1>Match History</h1>
+    <button id="updateMatchesBtn" aria-label="Update matches from server">Update Matches</button>
+    <div id="updateStatus" aria-live="polite" role="status"></div>
+    <div id="matches-container">
+      <!-- Matches list goes here -->
+    </div>
+  </div>
+
+  <div id="league-view" class="view" tabindex="0" aria-live="polite" aria-label="League View">
+    <h1>League Table</h1>
+    <div class="league-section">
+      <table aria-label="League standings" id="leagueTable">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Team</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>GF</th>
+            <th>GA</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- League rows inserted here -->
+        </tbody>
+      </table>
+    </div>
+    <h2>Top Scorers</h2>
+    <ul id="topScorers">
+      <!-- Top scorers list -->
+    </ul>
+    <!-- FIFA-style top scorers chart added here -->
+    <canvas id="fifaTopScorersChart" aria-label="FIFA style top scorers bar chart" role="img"></canvas>
+
+    <h2>Top Assists</h2>
+    <ul id="topAssists">
+      <!-- Top assists list -->
+    </ul>
+    <!-- FIFA-style top assists chart added here -->
+    <canvas id="fifaTopAssistsChart" aria-label="FIFA style top assists bar chart" role="img"></canvas>
+  </div>
+<section id="bracket-section">
+  <h2>Semi-Finals</h2>
+  <div class="bracket">
+    <div class="matchup">
+      <div class="team">1st Place</div>
+      <div class="vs">vs</div>
+      <div class="team">4th Place</div>
+    </div>
+    <div class="matchup">
+      <div class="team">2nd Place</div>
+      <div class="vs">vs</div>
+      <div class="team">3rd Place</div>
+    </div>
+  </div>
+
+  <h2>Final</h2>
+  <div class="bracket">
+    <div class="matchup">
+      <div class="team">Winner SF1</div>
+      <div class="vs">vs</div>
+      <div class="team">Winner SF2</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+fetch('/api/league')
+  .then(res => res.json())
+  .then(data => {
+    const top4 = data.top4;
+    if (!top4 || top4.length < 4) return;
+
+    // Replace bracket placeholders with actual team names
+    const semiFinalMatchups = [
+      [top4[0], top4[3]], // 1st vs 4th
+      [top4[1], top4[2]], // 2nd vs 3rd
+    ];
+
+    const semiDivs = document.querySelectorAll('#bracket-section .bracket:nth-of-type(1) .matchup');
+    semiDivs.forEach((matchup, i) => {
+      const teams = matchup.querySelectorAll('.team');
+      teams[0].textContent = semiFinalMatchups[i][0].name;
+      teams[1].textContent = semiFinalMatchups[i][1].name;
+    });
+  });
+</script>
+
+</script>
+
+<div id="season-view" class="view" tabindex="0" aria-live="polite" aria-label="Season View">
+  <h1>Season Recap</h1>
+<div id="season-container"></div>
+
+  <div class="season-top">
+    <div class="mini-table">
+      <h2>Mini League Table</h2>
+      <table>
+        <thead>
+          <tr><th>Pos</th><th>Team</th><th>Pts</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>EVERYTHING DEAD</td><td>25</td></tr>
+          <tr><td>2</td><td>Real mvc</td><td>24</td></tr>
+          <tr><td>3</td><td>Club Frijol</td><td>21</td></tr>
+          <tr><td>4</td><td>Elite VT</td><td>13</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="season-bracket">
+      <h2>Semi-Finals</h2>
+      <ul>
+        <li>EVERYTHING DEAD 🆚 Elite VT – ✅ ED win</li>
+        <li>Real mvc 🆚 Club Frijol – ✅ Real mvc win</li>
+      </ul>
+      <h2>Final</h2>
+      <ul>
+        <li>EVERYTHING DEAD 🆚 Real mvc – 🏆 EVERYTHING DEAD wins!</li>
+      </ul>
+    </div>
+  </div>
+
+<div id="season-awards">
+  <h2>Players of the Season</h2>
+</div>
+<p style="font-style: italic; color: gray;">Stats locked for Season 1. Season 2 begins Wednesday.</p>
+
+  
+<script>
+  // Sidebar buttons & views
+  const btnPlayers = document.getElementById('btnPlayers');
+  const btnMatches = document.getElementById('btnMatches');
+  const btnLeague = document.getElementById('btnLeague');
+  const btnSeason = document.getElementById('btnSeason');
+    
+  const seasonView = document.getElementById('season-view');
+  const playersView = document.getElementById('players-view');
+  const matchesView = document.getElementById('matches-view');
+  const leagueView = document.getElementById('league-view');
+
+  function setActiveView(viewBtn, viewDiv) {
+  [btnPlayers, btnMatches, btnLeague, btnSeason].forEach(b => b.classList.remove('active'));
+  [playersView, matchesView, leagueView, seasonView].forEach(v => v.classList.remove('active'));
+
+  viewBtn.classList.add('active');
+  viewDiv.classList.add('active');
+
+  [btnPlayers, btnMatches, btnLeague, btnSeason].forEach(btn => {
+    btn.setAttribute('aria-selected', btn === viewBtn ? 'true' : 'false');
+    btn.tabIndex = btn === viewBtn ? 0 : -1;
+  });
+  [playersView, matchesView, leagueView, seasonView].forEach(div => {
+    div.tabIndex = div === viewDiv ? 0 : -1;
+  });
+
+  viewDiv.focus();
+}
+
+
+  btnPlayers.onclick = () => {
+    setActiveView(btnPlayers, playersView);
+    fetchPlayerStats();
+  };
+  btnMatches.onclick = () => {
+    setActiveView(btnMatches, matchesView);
+    fetchMatches();
+  };
+  btnLeague.onclick = () => {
+    setActiveView(btnLeague, leagueView);
+    loadLeagueAndScorers();
+  };
+  btnSeason.onclick = () => {
+  setActiveView(btnSeason, seasonView);
+  // You can optionally re-fetch here if needed:
+  // fetchSeasonData();
+};
+  // Dark mode toggle with localStorage persistence
+  const darkModeToggle = document.getElementById('darkModeToggle');
+
+  function applyDarkMode(dark) {
+    if (dark) {
+      document.body.classList.add('dark');
+      darkModeToggle.setAttribute('aria-pressed', 'true');
+    } else {
+      document.body.classList.remove('dark');
+      darkModeToggle.setAttribute('aria-pressed', 'false');
+    }
+  }
+
+  // Load saved dark mode preference
+  const savedDarkMode = localStorage.getItem('darkMode');
+  if (savedDarkMode === 'true') {
+    applyDarkMode(true);
+  }
+
+  darkModeToggle.onclick = () => {
+    const isDark = !document.body.classList.contains('dark');
+    applyDarkMode(isDark);
+    localStorage.setItem('darkMode', isDark);
+  };
+
+  // Player images mapping (update URLs as needed)
+  const imageMap = {
+    "ChuyLeal133": "https://images.mlssoccer.com/image/private/t_editorial_landscape_8_desktop_mobile/f_auto/lc-prd/pq0ifjpu2kvgcdzrld97",
+    "therealmandem7": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/HakimiAchraf.jpg/960px-HakimiAchraf.jpg",
+    "LB_coyote2026": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjZRhriaZakI4AdOjBbKSEo6skFj349dGaxFhwREYVXDrxyJ2gYXU8BtpB5cvCgRUT7HN7TIOLs9497TPyt07XYC0k9U5U4mvdyq4OUQyWeLAzNSQdrAlW31L-6tEBqa77jfMgFxhnfhDQ/s1600/I+Belong+To+Jesus+-+Kaka.jpg",
+    "ElWey_10": "https://assets.goal.com/images/v3/blt83eec223151ab34a/120766b54cdc32e99f440a38842e9584f695a761.jpg?auto=webp&format=pjpg&width=3840&quality=60",
+    "MauryLeal11": "https://static01.nyt.com/images/2013/07/31/sports/soccer/31iht-soccer31/31iht-soccer31-superJumbo.jpg",
+    "RC-_-Wheelie": "https://metro.co.uk/wp-content/uploads/2023/01/SEI_139827784-659a.jpg?quality=90&strip=all&w=646"
+  };
+
+  const defaultPlayerImage = "https://via.placeholder.com/300x400/555555/ffffff?text=No+Image";
+
+  // Player points system weights by position
+  const POINTS_SYSTEM = {
+    Forward: {
+      goal: 5,
+      assist: 3,
+      cleanSheet: 1,
+      tackle: 0.5,
+      save: 0,
+      motm: 3,
+      yellowCard: -1,
+      redCard: -3
+    },
+    Midfielder: {
+      goal: 6,
+      assist: 4,
+      cleanSheet: 2,
+      tackle: 1,
+      save: 0,
+      motm: 3,
+      yellowCard: -1,
+      redCard: -3
+    },
+    Defender: {
+      goal: 8,
+      assist: 5,
+      cleanSheet: 4,
+      tackle: 1.5,
+      save: 0,
+      motm: 3,
+      yellowCard: -1,
+      redCard: -3
+    },
+    Goalkeeper: {
+      goal: 10,
+      assist: 6,
+      cleanSheet: 6,
+      tackle: 0.5,
+      save: 1,
+      motm: 3,
+      yellowCard: -1,
+      redCard: -3
+    }
+  };
+
+  // Fetch and render player stats with point-based ranking
+  async function fetchPlayerStats() {
+    try {
+      const res = await fetch('/api/players');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      if (!data.members || !Array.isArray(data.members)) {
+        console.warn('Player data format unexpected or empty members array.');
+        return;
+      }
+
+      const players = data.members.map(player => {
+        let role = player.role || "Forward";
+
+        if (!POINTS_SYSTEM[role]) {
+          console.warn(`Unknown role "${role}" for player "${player.name}", defaulting to Forward.`);
+          role = "Forward";
+        }
+
+        const rolePoints = POINTS_SYSTEM[role];
+
+        const points = (
+          (player.goals || 0) * rolePoints.goal +
+          (player.assists || 0) * rolePoints.assist +
+          (player.cleanSheets || 0) * rolePoints.cleanSheet +
+          (player.tacklesMade || 0) * rolePoints.tackle +
+          (player.saves || 0) * rolePoints.save +
+          (player.manOfTheMatch || 0) * rolePoints.motm +
+          (player.yellowCards || 0) * rolePoints.yellowCard +
+          (player.redCards || 0) * rolePoints.redCard
+        );
+
+        return {
+          ...player,
+          points,
+          role,
+          image: imageMap[player.name] || defaultPlayerImage
+        };
+      });
+
+      players.sort((a, b) => b.points - a.points);
+
+      const container = document.getElementById('players-container');
+      container.innerHTML = '';
+      players.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.backgroundImage = `url('${p.image}')`;
+        card.innerHTML = `
+          <div class="rank">${idx + 1}</div>
+          <div class="overlay" aria-label="Player ${p.name}, Position: ${p.role}, Points: ${p.points.toFixed(1)}">
+            <h2>${p.name} <span class="badge">${p.role}</span></h2>
+            <div class="stats">
+              <p>Goals: ${p.goals || 0}</p>
+              <p>Assists: ${p.assists || 0}</p>
+              <p>Clean Sheets: ${p.cleanSheets || 0}</p>
+              <p>Tackles: ${p.tacklesMade || 0}</p>
+              <p>Saves: ${p.saves || 0}</p>
+              <p>Man of the Match: ${p.manOfTheMatch || 0}</p>
+              <p>Yellow Cards: ${p.yellowCards || 0}</p>
+              <p>Red Cards: ${p.redCards || 0}</p>
+              <p><strong>Points: ${p.points.toFixed(1)}</strong></p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    } catch (error) {
+      console.error('Error loading player stats:', error);
+    }
+  }
+
+  // Fetch and render match history
+  async function fetchMatches() {
+    try {
+      const res = await fetch('/api/matches');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      const container = document.getElementById('matches-container');
+      container.innerHTML = '';
+
+      if (!data.matches || data.matches.length === 0) {
+        container.innerHTML = '<p>No match data available</p>';
+        return;
+      }
+
+      for (const match of data.matches) {
+        const clubs = match.clubs || {};
+        const clubIds = Object.keys(clubs);
+        if (clubIds.length !== 2) continue;
+
+        const [homeId, awayId] = clubIds;
+        const homeClub = clubs[homeId];
+        const awayClub = clubs[awayId];
+
+        const date = match.timestamp ? new Date(match.timestamp) : null;
+        const dateStr = date ? date.toLocaleDateString() + ' ' + date.toLocaleTimeString() : 'Date Unknown';
+
+        const matchDiv = document.createElement('p');
+        matchDiv.textContent = `${dateStr}: ${homeClub.details.name} ${homeClub.goals || 0} - ${awayClub.goals || 0} ${awayClub.details.name}`;
+        container.appendChild(matchDiv);
+      }
+    } catch (error) {
+      console.error('Error loading matches:', error);
+    }
+  }
+
+  // Chart.js instances references
+  let fifaTopScorersChartInstance = null;
+  let fifaTopAssistsChartInstance = null;
+
+  // Common function to render FIFA style horizontal bar chart
+  function renderFifaChart(canvasId, playersData, valueKey) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    // Destroy previous instance if exists
+    if (canvasId === 'fifaTopScorersChart' && fifaTopScorersChartInstance) {
+      fifaTopScorersChartInstance.destroy();
+    }
+    if (canvasId === 'fifaTopAssistsChart' && fifaTopAssistsChartInstance) {
+      fifaTopAssistsChartInstance.destroy();
+    }
+
+    const labels = playersData.map(p => p.name);
+    const dataPoints = playersData.map(p => p[valueKey]);
+
+    const gradientColors = [
+      '#f7b733', // gold
+      '#4a90e2', // bright blue
+      '#d1b50f', // deep gold
+      '#3b6cb8', // dark blue
+      '#e6c54f', // lighter gold
+      '#2a4d7d'  // navy blue
+    ];
+
+    const barColors = labels.map((_, i) => gradientColors[i % gradientColors.length]);
+
+    const config = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: valueKey === 'goals' ? 'Goals' : 'Assists',
+          data: dataPoints,
+          backgroundColor: barColors,
+          borderRadius: 8,
+          borderSkipped: false,
+          maxBarThickness: 40,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              color: document.body.classList.contains('dark') ? '#eee' : '#222',
+              font: { size: 14 }
+            },
+            grid: {
+              color: document.body.classList.contains('dark') ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+            }
+          },
+          y: {
+            ticks: {
+              color: document.body.classList.contains('dark') ? '#eee' : '#222',
+              font: { size: 16, weight: 'bold' }
+            },
+            grid: {
+              display: false
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: '#333',
+            titleColor: '#fff',
+            bodyColor: '#ddd',
+            bodyFont: { weight: 'bold' }
+          }
+        }
+      }
+    };
+
+    const chartInstance = new Chart(ctx, config);
+
+    if (canvasId === 'fifaTopScorersChart') {
+      fifaTopScorersChartInstance = chartInstance;
+    } else if (canvasId === 'fifaTopAssistsChart') {
+      fifaTopAssistsChartInstance = chartInstance;
+    }
+  }
+
+  // Fetch and render league table, top scorers, and top assists
+  async function loadLeagueAndScorers() {
+    try {
+      const res = await fetch('/api/league');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      // Render league table
+      const leagueTableBody = document.querySelector('#leagueTable tbody');
+      leagueTableBody.innerHTML = '';
+      if (data.standings && data.standings.length > 0) {
+        // Sort by points desc, then goal difference desc
+       data.standings.sort((a, b) => {
+  if (b.pts !== a.pts) return b.pts - a.pts;
+  const gdB = b.goalsFor - b.goalsAgainst;
+  const gdA = a.goalsFor - a.goalsAgainst;
+  return gdB - gdA;
+});
+
+ data.standings.forEach((team, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${team.name}</td>
+            <td>${team.wins}</td>
+            <td>${team.ties}</td>
+            <td>${team.losses}</td>
+            <td>${team.goals}</td>
+            <td>${team.goalsAgainst}</td>
+            <td>${team.points}</td>
+          `;
+          leagueTableBody.appendChild(tr);
+        });
+      }
+      // Render top scorers (text list)
+      const topScorersList = document.getElementById('topScorers');
+      topScorersList.innerHTML = '';
+      if (data.topScorers && data.topScorers.length > 0) {
+        data.topScorers.forEach(player => {
+          const li = document.createElement('li');
+          li.textContent = `${player.name}: ${player.goals} goals`;
+          topScorersList.appendChild(li);
+        });
+
+        // Render the FIFA style bar chart for top scorers
+        renderFifaChart('fifaTopScorersChart', data.topScorers, 'goals');
+      } else {
+        if (fifaTopScorersChartInstance) {
+          fifaTopScorersChartInstance.destroy();
+          fifaTopScorersChartInstance = null;
+        }
+      }
+
+      // Render top assists (text list)
+      const topAssistsList = document.getElementById('topAssists');
+      topAssistsList.innerHTML = '';
+      if (data.topAssists && data.topAssists.length > 0) {
+        data.topAssists.forEach(player => {
+          const li = document.createElement('li');
+          li.textContent = `${player.name}: ${player.assists} assists`;
+          topAssistsList.appendChild(li);
+        });
+
+        // Render the FIFA style bar chart for top assists
+        renderFifaChart('fifaTopAssistsChart', data.topAssists, 'assists');
+      } else {
+        if (fifaTopAssistsChartInstance) {
+          fifaTopAssistsChartInstance.destroy();
+          fifaTopAssistsChartInstance = null;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading league or scorers:', error);
+    }
+  }
+
+  
+  // Update Matches button logic
+  const updateMatchesBtn = document.getElementById('updateMatchesBtn');
+  const updateStatus = document.getElementById('updateStatus');
+
+  updateMatchesBtn.addEventListener('click', async () => {
+    updateStatus.textContent = 'Updating matches... Please wait.';
+    updateMatchesBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/matches?update=true');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      await res.json();
+      updateStatus.textContent = 'Matches updated successfully.';
+      fetchMatches(); // Refresh match list
+    } catch (error) {
+      updateStatus.textContent = 'Failed to update matches.';
+      console.error('Error updating matches:', error);
+    } finally {
+      updateMatchesBtn.disabled = false;
+    }
+  });
+
+  // On initial load show players by default
+  fetchPlayerStats();
+
+  
+    
+
+
+    
+async function loadSeasonView() {
+  const seasonContainer = document.getElementById('season-container');
+  seasonContainer.innerHTML = ''; // Clear previous content
+
+  const res = await fetch('/seasonSnapshot.json');
+  const snapshotData = await res.json();
+  if (!snapshotData) return;
+
+  const awardsContainer = document.getElementById('season-awards');
+  awardsContainer.innerHTML = '<h2>Players of the Season</h2>';
+
+  const awards = snapshotData.playersOfSeason;
+  if (!awards || !awards.overall) return;
+
+  const awardsMap = {
+    goalkeeper: '🧤 Goalkeeper',
+    defense: '🛡️ Defender',
+    midfield: '🎯 Midfielder',
+    attack: '🥇 Attacker',
+    overall: '🏆 Overall Player'
+  };
+
+  Object.entries(awardsMap).forEach(([key, label]) => {
+    const p = awards[key];
+    if (!p) return;
+
+    const div = document.createElement('div');
+    div.className = 'award-entry';
+    div.innerHTML = `
+      <h3>${label} of the Season</h3>
+      <div class="award-card">
+        <img src="${p.image || '/images/default-player.png'}" alt="${p.name}" class="player-image" />
+        <div class="award-text">
+          <strong>${p.name}</strong>
+          <p>${key === 'goalkeeper' ? `${p.cleanSheets || 0} clean sheets and ${p.assists} assists` : `Goals: ${p.goals} • Assists: ${p.assists}`}</p>
+        </div>
+      </div>
+    `;
+    awardsContainer.appendChild(div);
+  });
+
+  // Top scorers
+  if (snapshotData.topScorers?.length) {
+    const scorers = document.createElement('div');
+    scorers.className = 'award-entry';
+    scorers.innerHTML = `
+      <h3>⚽ Top Scorers</h3>
+      <ol>
+        ${snapshotData.topScorers.map(p => `<li>${p.name} – ${p.goals} goals</li>`).join('')}
+      </ol>
+    `;
+    awardsContainer.appendChild(scorers);
+  }
+
+  // Top assisters
+  if (snapshotData.topAssisters?.length) {
+    const assisters = document.createElement('div');
+    assisters.className = 'award-entry';
+    assisters.innerHTML = `
+      <h3>🎯 Top Assisters</h3>
+      <ol>
+        ${snapshotData.topAssisters.map(p => `<li>${p.name} – ${p.assists} assists</li>`).join('')}
+      </ol>
+    `;
+    awardsContainer.appendChild(assisters);
+  }
+
+  // === League Standings ===
+  const tableHTML = `
+    <div class="season-section">
+      <h2>🏆 Final League Standings</h2>
+      <table class="mini-league-table">
+        <thead>
+          <tr><th>Pos</th><th>Club</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr>
+        </thead>
+        <tbody>
+          ${snapshotData.leagueTable.map((team, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${team.name}</td>
+              <td>${team.wins}</td>
+              <td>${team.draws}</td>
+              <td>${team.losses}</td>
+              <td>${team.points}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // === Playoffs ===
+  const playoffsHTML = `
+    <div class="season-section">
+      <h2>🎯 Playoffs</h2>
+      <div class="playoff-matches">
+        <div><strong>Semi-Final 1:</strong> ${snapshotData.playoffs?.semi1 || 'TBD'}</div>
+        <div><strong>Semi-Final 2:</strong> ${snapshotData.playoffs?.semi2 || 'TBD'}</div>
+        <div><strong>Final:</strong> ${snapshotData.playoffs?.final || 'TBD'}</div>
+      </div>
+    </div>
+  `;
+
+  // === Fancy Awards Grid ===
+  const roles = ['attack', 'midfield', 'defense', 'goalkeeper'];
+  const fancyAwardsHTML = `
+    <div class="season-section">
+      <h2>🌟 Season Awards</h2>
+      <div class="awards-grid">
+        ${roles.map(role => {
+          const p = awards[role];
+          return p ? `
+            <div class="award-card fade-in">
+              <img class="award-bg" src="/images/award-bg.jpg" />
+              <div class="award-overlay">
+                <h3 class="award-title">${awardsMap[role]} of the Season</h3>
+                <img class="player-photo" src="${p.image || '/images/default-player.png'}" />
+                <h2 class="player-name">${p.name}</h2>
+                <p class="player-stats">Goals: ${p.goals} • Assists: ${p.assists} • Rating: ${p.rating}</p>
+                <img class="club-badge" src="/images/clubs/${p.clubId}.png" />
+              </div>
+            </div>` : '';
+        }).join('')}
+        <div class="award-card fade-in">
+          <img class="award-bg" src="/images/award-bg.jpg" />
+          <div class="award-overlay">
+            <h3 class="award-title">${awardsMap.overall} of the Season</h3>
+            <img class="player-photo" src="${awards.overall.image || '/images/default-player.png'}" />
+            <h2 class="player-name">${awards.overall.name}</h2>
+            <p class="player-stats">Goals: ${awards.overall.goals} • Assists: ${awards.overall.assists} • Rating: ${awards.overall.rating}</p>
+            <img class="club-badge" src="/images/clubs/${awards.overall.clubId}.png" />
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add all to page
+  seasonContainer.innerHTML = tableHTML + playoffsHTML + fancyAwardsHTML;
+
+  if (typeof revealAwardCardsSequentially === 'function') {
+    revealAwardCardsSequentially(); // If your animation exists
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadSeasonView();
+});
+
+</script>
+
+</body>
+</html>
