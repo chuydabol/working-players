@@ -7,9 +7,24 @@ const cron = require('node-cron');
 
 const app = express(); // ✅ Initialize Express
 
-const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT || process.env.firebase_service_account
-);
+const rawServiceAccount =
+  process.env.FIREBASE_SERVICE_ACCOUNT || process.env.firebase_service_account;
+
+if (!rawServiceAccount) {
+  console.error(
+    '❌ FIREBASE_SERVICE_ACCOUNT environment variable is not defined.'
+  );
+  process.exit(1);
+}
+
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(rawServiceAccount);
+} catch (err) {
+  console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:', err);
+  process.exit(1);
+}
+
 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 admin.initializeApp({
