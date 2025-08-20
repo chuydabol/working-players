@@ -1,0 +1,28 @@
+{
+  "members": [
+    {
+      "name": "Player One",
+      "role": "Forward",
+      "goals": 10,
+      "assists": 5,
+      "cleanSheets": 0,
+      "tacklesMade": 2,
+      "saves": 0,
+      "manOfTheMatch": 1,
+      "yellowCards": 0,
+      "redCards": 0
+    },
+    {
+      "name": "Player Two",
+      "role": "Defender",
+      "goals": 2,
+      "assists": 3,
+      "cleanSheets": 4,
+      "tacklesMade": 15,
+      "saves": 0,
+      "manOfTheMatch": 0,
+      "yellowCards": 1,
+      "redCards": 0
+    }
+  ]
+}
