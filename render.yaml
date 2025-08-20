@@ -2,6 +2,7 @@ services:
   - type: web
     name: working-players
     env: node
+
   buildCommand: "npm install"
   startCommand: "npm start"
   plan: free
@@ -9,3 +10,15 @@ services:
   envVars:
     - key: NODE_VERSION
       value: 18
+
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    plan: free
+    autoDeploy: true
+
+
+    envVars:
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+
+
