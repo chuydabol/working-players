@@ -250,10 +250,11 @@ const CLUB_NAMES = {
 
 
 
-async function fetchPlayersForClub(clubId) {
+async function fetchPlayersForClub(clubId, attempt = 1) {
   const url = `https://proclubs.ea.com/api/fc/members/stats?platform=common-gen5&clubId=${clubId}`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  // increase timeout to 15 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -264,6 +265,12 @@ async function fetchPlayersForClub(clubId) {
     return res.json();
   } catch (err) {
     clearTimeout(timeoutId);
+    // retry with exponential backoff up to 3 attempts
+    if (attempt < 3) {
+      const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchPlayersForClub(clubId, attempt + 1);
+    }
     throw err;
   }
 }
@@ -279,14 +286,17 @@ function getRoleFromPosition(positionId) {
 
 app.get('/api/players', async (req, res) => {
   try {
-    const results = await Promise.all(CLUB_IDS.map(id =>
-      fetchPlayersForClub(id).catch(e => {
-        console.error(`[${new Date().toISOString()}] Error fetching club ${id}: ${e.message}`);
-        return { members: [] };
-      })
-    ));
+    const results = await Promise.allSettled(CLUB_IDS.map(id => fetchPlayersForClub(id)));
 
-    const allMembers = results.flatMap(r => Array.isArray(r.members) ? r.members : []);
+    const allMembers = [];
+    const errors = [];
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled' && Array.isArray(result.value?.members)) {
+        allMembers.push(...result.value.members);
+      } else {
+        errors.push({ clubId: CLUB_IDS[index], message: result.reason?.message || 'Unknown error' });
+      }
+    });
 
     const unique = new Map();
     for (const player of allMembers) {
@@ -297,7 +307,14 @@ app.get('/api/players', async (req, res) => {
       }
     }
 
-    res.json({ members: Array.from(unique.values()) });
+    const response = { members: Array.from(unique.values()) };
+    if (errors.length) response.errors = errors;
+
+    if (allMembers.length === 0) {
+      return res.status(503).json({ error: 'Failed to fetch player stats', details: errors });
+    }
+
+    res.json(response);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] /api/players error:`, error);
     res.status(500).json({ error: 'Failed to fetch player stats' });
