@@ -9,3 +9,5 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
