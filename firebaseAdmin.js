@@ -1,5 +1,13 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./lb-league-24d6e-firebase-adminsdk-fbsvc-5bf19c4398.json');
+
+let serviceAccount;
+
+// ✅ Load service account from environment variable instead of file
+if (process.env.FIREBASE_KEY_JSON) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_KEY_JSON);
+} else {
+  throw new Error("Missing FIREBASE_KEY_JSON environment variable");
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
