@@ -6,33 +6,10 @@ const cors = require('cors');
 const cron = require('node-cron');
 
 const app = express(); // ✅ Initialize Express
-
-const rawServiceAccount =
-  process.env.FIREBASE_SERVICE_ACCOUNT || process.env.firebase_service_account;
-
-if (!rawServiceAccount) {
-  console.error(
-    '❌ FIREBASE_SERVICE_ACCOUNT environment variable is not defined.'
-  );
-  process.exit(1);
-}
-
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(rawServiceAccount);
-} catch (err) {
-  console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:', err);
-  process.exit(1);
-}
-
-serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+const serviceAccount = require('./config/firebase-service-account.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  }),
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore(); // ✅ Firestore setup
