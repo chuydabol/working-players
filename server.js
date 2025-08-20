@@ -6,7 +6,10 @@ const cors = require('cors');
 const cron = require('node-cron');
 
 const app = express(); // ✅ Initialize Express
-const serviceAccount = require('./config/firebase-service-account.json');
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT || process.env.firebase_service_account
+);
+serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
