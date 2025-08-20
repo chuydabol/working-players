@@ -1,18 +1,30 @@
-const { db } = require('./firebase'); // adjust path if needed
+// cron-season-update.js
+
+const { db } = require('./firebaseAdmin'); // ✅ use firebaseAdmin instead of ./firebase
 const FREEZE_TIME = new Date('2025-07-26T01:00:00-07:00').getTime();
 
-
-
-;
-
-
 // 🛑 TEMPORARILY DISABLING LEAGUE FREEZE
-// const FREEZE_TIME = new Date('2025-07-26T01:00:00-07:00').getTime();
 // if (Date.now() >= FREEZE_TIME) {
 //   console.log('📌 League frozen. Skipping snapshot generation.');
 //   process.exit(0);
 // }
 
+// ----------------------------
+// Helpers
+// ----------------------------
+function normalizeRole(pos) {
+  if (!pos) return 'Unknown';
+  pos = pos.toLowerCase();
+  if (pos.includes('attack') || pos.includes('forward')) return 'Attack';
+  if (pos.includes('mid')) return 'Midfield';
+  if (pos.includes('def')) return 'Defence';
+  if (pos.includes('keeper') || pos.includes('gk')) return 'Goalkeeper';
+  return 'Unknown';
+}
+
+// ----------------------------
+// League Setup
+// ----------------------------
 const CLUB_IDS = [
   2491998, 1527486, 1969494, 2086022, 2462194, 5098824,
   4869810, 576007, 4933507, 4824736, 481847, 3050467,
@@ -39,14 +51,17 @@ const CLUB_NAMES = {
   35642: 'EBK FC'
 };
 
-
+// ----------------------------
+// Main Job
+// ----------------------------
 async function updateSeasonSnapshot() {
   try {
-    // 1. Load matches
+    // 1. Load matches from Firestore
     const snapshot = await db.collection('matches')
       .orderBy('timestamp', 'desc')
       .limit(1000)
       .get();
+
     const matches = snapshot.docs.map(doc => doc.data());
 
     // 2. Build league table
@@ -69,7 +84,7 @@ async function updateSeasonSnapshot() {
     for (const match of matches) {
       const clubs = match.clubs || {};
       const [clubAId, clubBId] = Object.keys(clubs);
-      if (!CLUB_IDS.includes(clubAId) && !CLUB_IDS.includes(clubBId)) continue;
+      if (!CLUB_IDS.includes(Number(clubAId)) && !CLUB_IDS.includes(Number(clubBId))) continue;
 
       const clubA = clubs[clubAId];
       const clubB = clubs[clubBId];
@@ -172,23 +187,21 @@ async function updateSeasonSnapshot() {
           const oppGoals = Number(match.clubs?.[oppClubId]?.goals || 0);
           const teamGoals = Number(clubResult?.goals || 0);
 
-// inside player stats loop
-    if (teamGoals > oppGoals) stats[name].winCount++;
-    if (role === 'Goalkeeper' && oppGoals === 0) stats[name].cleanSheets++;
-        } // closes player loop
-    }   // closes clubId loop
-}       // closes matches loop
+          if (teamGoals > oppGoals) stats[name].winCount++;
+          if (role === 'Goalkeeper' && oppGoals === 0) stats[name].cleanSheets++;
+        }
+      }
+    }
 
-// Save or log results
-console.log('Standings:', standings);
-console.log('SemiFinals:', semiFinals);
-console.log('Final:', final);
-console.log('Player Stats:', stats);
+    // Save or log results (replace with Firestore write if needed)
+    console.log('Standings:', standings);
+    console.log('SemiFinals:', semiFinals);
+    console.log('Final:', final);
+    console.log('Player Stats:', stats);
 
-
-} catch (err) {
-console.error('Failed to update season snapshot:', err);
+  } catch (err) {
+    console.error('Failed to update season snapshot:', err);
+  }
 }
-} // closes updateSeasonSnapshot function
 
 module.exports = updateSeasonSnapshot;
