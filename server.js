@@ -58,6 +58,23 @@ async function fetchClubPlayers(clubId) {
   }
 }
 
+async function fetchClubMatches(clubId) {
+  const url = `https://proclubs.ea.com/api/fc/clubs/matches?matchType=leagueMatch&platform=common-gen5&clubIds=${clubId}`;
+  try {
+    const res = await fetch(url, { headers: EA_HEADERS });
+    if (!res.ok) throw new Error(`EA responded ${res.status}`);
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === "object") {
+      return Object.values(data).flat();
+    }
+    return [];
+  } catch (err) {
+    console.error(`❌ Failed fetching matches for club ${clubId}:`, err.message);
+    return [];
+  }
+}
+
 app.get("/api/players", async (req, res) => {
   try {
     let allPlayers = [];
@@ -77,6 +94,21 @@ app.get("/api/players", async (req, res) => {
 // --- Example Firestore Route ---
 app.get("/api/matches", async (req, res) => {
   try {
+    if (req.query.update) {
+      let updated = 0;
+      for (const clubId of CLUB_IDS) {
+        const matches = await fetchClubMatches(clubId);
+        for (const match of matches) {
+          const id = String(match.matchId || match.matchid);
+          if (!id) continue;
+          await db.collection("matches").doc(id).set(match, { merge: true });
+          updated++;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      return res.json({ updated });
+    }
+
     const snapshot = await db
       .collection("matches")
       .orderBy("timestamp", "desc")
@@ -86,7 +118,7 @@ app.get("/api/matches", async (req, res) => {
       id: doc.id,
       ...doc.data(),
     }));
-    res.json(matches);
+    res.json({ matches });
   } catch (err) {
     console.error("❌ Failed fetching matches:", err);
     res.status(500).json({ error: "Failed fetching matches" });
